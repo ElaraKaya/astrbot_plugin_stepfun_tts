@@ -1,0 +1,8 @@
+{
+  "name": "astrbot_plugin_stepfun_tts",
+  "desc": "阶跃 StepAudio TTS 语音合成，给 LLM 暴露朗读内容、语速和语气指令参数",
+  "version": "v1.0.0",
+  "author": "ElaraKaya",
+  "repo": "https://github.com/ElaraKaya/astrbot_plugin_stepfun_tts",
+  "logo": "logo.png"
+}

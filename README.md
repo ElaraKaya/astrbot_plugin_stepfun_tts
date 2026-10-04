@@ -1,27 +1,43 @@
 # astrbot_plugin_stepfun_tts
 
-阶跃 StepAudio TTS 语音合成插件，为 LLM 暴露朗读内容、语速和语气指令参数。
+阶跃 StepFun StepAudio TTS 语音合成插件。给 LLM 暴露 `stepfun_speak` 工具，可指定朗读内容、语气指令和语速；也提供 `/tts` 指令手动合成。
 
-这是一个 [AstrBot](https://github.com/AstrBotDevs/AstrBot) 插件。
+灵感来源：AstrBot 官方插件开发文档 https://docs.astrbot.app/dev/star/plugin-new.html
 
 ## 功能
 
-- 调用阶跃 StepAudio TTS 接口合成语音（mp3 / wav / pcm）。
-- 向 LLM 暴露工具参数：朗读文本、语速、语气指令。
-- 可配置：API 密钥、API 基础 URL（支持反代）、模型、音色、默认语气指令、默认语速、输出格式、单次最大字符数、以语音条形式发送。
-
-## 安装
-
-在 AstrBot 插件市场搜索 `astrbot_plugin_stepfun_tts`，或克隆本仓库到 `data/plugins/` 目录下。
+- LLM 工具 `stepfun_speak`，参数 `text` / `instruction` / `speed`
+  - `text` 里可用圆括号插入句内演绎指令，如「（压低声音）我没事。」括号内容不朗读
+  - `instruction` 控制整段全局语气，不传则使用面板里的默认语气
+  - `instruction` 字符上限：`stepaudio-2.5-tts` 200 字，`stepaudio-3-tts` 500 字
+- 指令 `/tts <朗读内容> [语速] [音色]` 手动合成，音色可临时覆盖面板默认值
+- 合成后自动用 ffmpeg 转成单声道 44.1k wav，以语音消息发出
 
 ## 配置
 
-在 AstrBot 的插件配置面板中填写阶跃 API 密钥（形如 `stp_xxxxx`）。API 密钥保存在本地 `*_config.json` 中，该文件已被 `.gitignore` 排除，不会提交到仓库。
+在插件配置面板填写：
 
-## 使用
+| 配置项 | 说明 |
+| --- | --- |
+| `api_key` | 阶跃 API 密钥，列表形式，填一项即可 |
+| `api_base_url` | 官方 `https://api.stepfun.com/v1`，国际站 `https://api.stepfun.ai/v1`，Step Plan 订阅 `https://api.stepfun.com/step_plan/v1` |
+| `model` | `stepaudio-2.5-tts` 或 `stepaudio-3-tts` |
+| `voice` | 阶跃内置音色 ID，如 `cixingnansheng`、`wenroushunv`、`livelybreezy-female`、`tianfeifei` |
+| `default_instruction` | 默认语气指令，仅在 LLM 未传 `instruction` 时生效 |
+| `default_speed` | 默认语速，1.0 为常速 |
+| `response_format` | `mp3` / `wav` / `pcm` |
+| `send_as_voice` | 开启则转 wav 作为语音条发送，关闭则发送音频文件 |
 
-在对话中让 LLM 朗读一段内容即可，可附带语速与语气指令。
+模型与渠道的对应关系：`stepaudio-3-tts` 只能走直接调用 API，Step Plan 通道只有 `stepaudio-2.5-tts`。
+
+## 依赖
+
+需要系统装有 `ffmpeg`，用于把音频转成语音消息可用的 wav。
+
+## 安装
+
+把插件目录放进 `AstrBot/data/plugins/`，或在 WebUI 插件市场安装后在面板重载。
 
 ## 许可证
 
-见仓库说明。
+MIT

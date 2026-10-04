@@ -1,0 +1,61 @@
+{
+  "api_key": {
+    "description": "阶跃 API密钥",
+    "type": "list",
+    "hint": "请输入您的阶跃 API 密钥，形如 stp_xxxxx",
+    "default": []
+  },
+  "api_base_url": {
+    "description": "阶跃 API基础URL",
+    "type": "string",
+    "hint": "可以填写你的反代地址,默认为官方API基础URL",
+    "default": "https://api.stepfun.ai/step_plan/v1"
+  },
+  "model": {
+    "description": "进行合成的模型,不在可选的可以到插件代码中进行修改",
+    "type": "string",
+    "hint": "选择要使用的合成模型",
+    "default": "stepaudio-2.5-tts"
+  },
+  "voice": {
+    "description": "音色",
+    "type": "string",
+    "hint": "阶跃内置系统音色 ID，如 cixingnansheng、livelybreezy-female、elegantgentle-female、vibrant-youth 等。LLM 无法修改此项",
+    "default": "livelybreezy-female"
+  },
+  "default_instruction": {
+    "description": "默认语气指令",
+    "type": "string",
+    "hint": "整段语音的全局语气基调。仅在 LLM 未传 instruction 时生效，两者不叠加。留空则不使用。",
+    "default": ""
+  },
+  "default_speed": {
+    "description": "默认语速",
+    "type": "float",
+    "hint": "1.0 为常速，0.5 偏慢，1.5 偏快",
+    "default": 1.0
+  },
+  "response_format": {
+    "description": "输出音频格式",
+    "type": "string",
+    "hint": "mp3 或 wav，pcm 为裸流",
+    "default": "mp3",
+    "options": [
+      "mp3",
+      "wav",
+      "pcm"
+    ]
+  },
+  "max_char_limit": {
+    "description": "单次最大字符数",
+    "type": "int",
+    "hint": "超出部分会被截断",
+    "default": 1000
+  },
+  "send_as_voice": {
+    "description": "以语音消息形式发送",
+    "type": "bool",
+    "hint": "开启后转 wav 作为语音条发送，关闭则发送音频文件",
+    "default": true
+  }
+}
