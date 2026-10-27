@@ -26,7 +26,7 @@
   "default_instruction": {
     "description": "默认语气指令",
     "type": "string",
-    "hint": "整段语音的全局语气基调。仅在 LLM 未传 instruction 时生效，两者不叠加。留空则不使用。",
+    "hint": "整段语音的全局语气基调（如：声音自然灵动，语调俏皮有呼吸感，情绪随句内指令明显起伏）。仅在 LLM 未传 instruction 时生效，两者不叠加。避免写死单一低音量（如一直轻声呢喃），否则会压制句内括号的情绪反差。",
     "default": ""
   },
   "default_speed": {

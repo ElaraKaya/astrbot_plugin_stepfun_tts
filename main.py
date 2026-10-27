@@ -68,6 +68,17 @@ INSTRUCTION_CHAR_LIMIT = {
 """各模型允许的 instruction 字符上限，超出会直接报错。"""
 
 
+def wants_another_turn(value) -> bool:
+    """只有明确真值才再来一轮。缺省、false、空字符串都静默结束。"""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value != 0
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "y"}
+    return False
+
+
 @dataclass
 class StepfunSpeechTool(FunctionTool[AstrAgentContext]):
     """把文字转成语音消息。"""
@@ -75,6 +86,9 @@ class StepfunSpeechTool(FunctionTool[AstrAgentContext]):
     name: str = "stepfun_speak"
     description: str = (
         "使用阶跃 StepAudio 把文字合成为语音，并以语音消息形式发到当前会话。"
+        "默认成功后直接结束本轮，不会再输出文字。想表达的内容全部放进 text 里念出来。"
+        "只有这一轮还没做完、还要再发文字或再调别的工具时，才把 continue_after 设为 true。"
+        "设为 true 后本工具返回一句话，模型可以再来一轮；不传或 false 保持静默结束。"
         "适合把旁白、台词、提示语直接念出来。"
         "语气演绎有两层：instruction 控制整段基调，text 里用圆括号 () 插入句内指令"
         "（括号里的内容只当指令，不会被念出来）。"
@@ -89,9 +103,15 @@ class StepfunSpeechTool(FunctionTool[AstrAgentContext]):
                 "text": {
                     "type": "string",
                     "description": (
-                        "要朗读的文字内容。可以在句中用圆括号插入句内演绎指令，"
-                        "如「（压低声音）我没事。（短促吸气）真的。」"
-                        "括号里的内容不会被朗读出来。"
+                        "要朗读的文字内容。可以在句中用圆括号插入句内演绎指令（括号内容作为导演指令，不会被朗读出来）。"
+                        "括号内必须写完整、具体的动作加语气描述，不要只塞孤立短词或拟声词："
+                        "如「（长长地叹了一口气，语气无奈又疲惫）搞半天是这么回事。"
+                        "（忍不住笑出声，边笑边带着调侃的语气说）看把你紧张的。"
+                        "（短促地吸了一口气，突然压低到极致的气声）仔细听好。」"
+                        "严禁事项：1. 严禁在括号内外硬塞「噗哈哈」「哈哈」「嘻嘻」「哼哼」「噗」等拟声词"
+                        "（写在正文会被生硬棒读，塞进括号在克隆音色下极易失真或失效，需表达笑意请写「忍不住笑出声，边笑边说」）；"
+                        "2. 严禁连续叠加多个括号（同处指令请合并进同一个括号）；"
+                        "3. 括号后直接跟正常台词文字，不要紧跟省略号，也不要在句首硬塞孤立笑声。"
                     ),
                 },
                 "instruction": {
@@ -110,6 +130,15 @@ class StepfunSpeechTool(FunctionTool[AstrAgentContext]):
                 "speed": {
                     "type": "number",
                     "description": "语速倍率，0.5 慢速，1.0 常速，1.5 快速。",
+                },
+                "continue_after": {
+                    "type": "boolean",
+                    "description": (
+                        "语音发出后是否还要再来一轮。"
+                        "不传或 false：静默结束，不要再输出文字。"
+                        "true：本轮还没做完，工具返回一句话后可以继续发文字或调用其他工具。"
+                        "没有后续就不要传 true。"
+                    ),
                 },
             },
             "required": ["text"],
@@ -196,15 +225,16 @@ class StepfunSpeechTool(FunctionTool[AstrAgentContext]):
             logger.error(f"[stepfun_tts] 发送失败: {exc}")
             return f"错误：发送语音失败，{exc}"
 
-        detail = f"，语气指令：{instruction}" if instruction else ""
-        return f"已用 {voice} 朗读 {len(text)} 字并发送语音（语速 {speed}{detail}）。"
+        if wants_another_turn(kwargs.get("continue_after")):
+            return "语音已发出。本轮未结束，请继续做还没完成的事。没有后续就停，不要再调用本工具。"
+        return None
 
 
 @register(
     "astrbot_plugin_stepfun_tts",
     "ElaraKaya",
-    "阶跃 StepAudio TTS 语音合成，给 LLM 暴露朗读内容、语速与语气指令",
-    "1.0.0",
+    "阶跃 StepAudio TTS 语音合成，给 LLM 暴露朗读内容、语速与语气指令。默认发完结束，continue_after 为 true 时再来一轮",
+    "1.0.2",
     "https://github.com/ElaraKaya/astrbot_plugin_stepfun_tts",
 )
 class StepfunTTSPlugin(Star):
